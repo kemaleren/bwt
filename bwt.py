@@ -96,9 +96,9 @@ def use_occ(occ, letter, i, length):
     return occ[letter][i]
 
 
-def bwt_interval(read, occ, count, length):
+def bwt_interval(query, occ, count, length):
     """Returns the interval [start, stop) in the suffix array that corresponds to exact
-    matches of 'read'.
+    matches of 'query'.
 
     occ    : occurrence information calculated with get_occ.
     count  : count information calculated with get_count.
@@ -107,10 +107,9 @@ def bwt_interval(read, occ, count, length):
     """
     begin = 0
     end = length-1
-    read = read[::-1] #reverse the read
+    query = query[::-1] #reverse the query
     
-    query = ""
-    for letter in read:
+    for letter in query:
         begin = count[letter] + use_occ(occ, letter, begin-1, length) + 1 
         end = count[letter] + use_occ(occ, letter, end, length)
         if begin > end: return None, None
@@ -153,9 +152,9 @@ def get_bwt_data(reference):
     return alphabet, bwt, occ, count, sa
 
 
-def bwt_inexact_match(read, reference, mismatches=None):
+def bwt_inexact_match(query, reference, mismatches=None):
     """
-    Find all matches of the string 'read' in the string 'reference', with at most
+    Find all matches of the string 'query' in the string 'reference', with at most
     'mismatch' mismatches
 
     Examples:
@@ -169,16 +168,16 @@ def bwt_inexact_match(read, reference, mismatches=None):
     alphabet, bwt, occ, count, sa = get_bwt_data(reference)
     results = []
 
-    for s in mutations(read, mismatches, alphabet):
+    for s in mutations(query, mismatches, alphabet):
         begin, end = bwt_interval(s, occ, count, len(bwt))
         if begin is not None:
             results += sa[begin:end]
     return sorted(set(results))
         
 
-def bwt_exact_match(read, reference):
+def bwt_exact_match(query, reference):
     """
-    Find all exact matches of the string 'read' in the string 'reference'.
+    Find all exact matches of the string 'query' in the string 'reference'.
 
     Examples:
     ---------
@@ -189,6 +188,6 @@ def bwt_exact_match(read, reference):
     []
 
     """
-    return bwt_inexact_match(read, reference, mismatches=0)
+    return bwt_inexact_match(query, reference, mismatches=0)
     
 
