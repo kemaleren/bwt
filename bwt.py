@@ -23,7 +23,7 @@ def get_bwt(s):
     'annb\x00aa'
 
     """
-    table = [s[i:] + s[:i] for i in range(len(s))]  # Table of rotations of string
+    table = [s[i:] + s[:i] for i in range(len(s))]  # rotations of string
     table = sorted(table)
     last_column = [row[-1] for row in table]  # Last characters of each row
     return "".join(last_column)  # Convert list of characters into string
@@ -32,7 +32,8 @@ def get_bwt(s):
 def get_occ(bwt):
     """
     Returns occurrence information for letters in the string 'bwt'.
-    occ[letter][i] = the number of occurrences of 'letter' in bwt[0,i+1].
+    occ[letter][i] = the number of occurrences of 'letter' in
+    bwt[0, i + 1].
 
     Examples:
     ---------
@@ -49,7 +50,7 @@ def get_occ(bwt):
     for letter in letters:
         occ[letter] = []
         for i in range(len(bwt)):
-            occ[letter].append(len([j for j in bwt[:i+1] if j == letter]))
+            occ[letter].append(len([j for j in bwt[:i + 1] if j == letter]))
     return occ
 
 
@@ -57,8 +58,8 @@ def get_count(s):
     """
     Returns count information for the letters in the string 's'.
 
-    count[letter] contains the number of symbols in 's' that are lexographically
-    smaller than 'letter'.
+    count[letter] contains the number of symbols in 's' that are
+    lexographically smaller than 'letter'.
 
     Examples:
     ---------
@@ -68,7 +69,7 @@ def get_count(s):
     
     """
     letters = set(s)
-    count={}
+    count = {}
     for letter in letters:
         count[letter] = len([i for i in s if i < letter])
     return count
@@ -90,15 +91,22 @@ def get_sa(s):
     
 
 def use_occ(occ, letter, i, length):
-    """Handles retrieving occurrence information; in particular, deals with overflows"""
-    if i==-1: return 0
-    if i==length: return occ[letter][-1]
+    """
+    Handles retrieving occurrence information; in particular, deals
+    with overflows.
+
+    """
+    if i == -1:
+        return 0
+    if i == length:
+        return occ[letter][-1]
     return occ[letter][i]
 
 
 def bwt_interval(query, occ, count, length):
-    """Returns the interval [start, stop) in the suffix array that corresponds to exact
-    matches of 'query'.
+    """
+    Returns the interval [start, stop) in the suffix array that
+    corresponds to exact matches of 'query'.
 
     occ    : occurrence information calculated with get_occ.
     count  : count information calculated with get_count.
@@ -106,20 +114,21 @@ def bwt_interval(query, occ, count, length):
 
     """
     begin = 0
-    end = length-1
+    end = length - 1
     query = query[::-1] #reverse the query
     
     for letter in query:
-        begin = count[letter] + use_occ(occ, letter, begin-1, length) + 1 
+        begin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1 
         end = count[letter] + use_occ(occ, letter, end, length)
-        if begin > end: return None, None
-    return begin, end+1
+        if begin > end:
+            return None, None
+    return begin, end + 1
 
 
 def mutations(s, dist, alphabet, used=None):
     """
-    Yields all strings that can be derived from string 's' with Hamming distance
-    at most 'dist', using a given alphabet.
+    Yields all strings that can be derived from string 's' with
+    Hamming distance at most 'dist', using a given alphabet.
 
     Examples:
     ---------
@@ -128,7 +137,8 @@ def mutations(s, dist, alphabet, used=None):
     ['bad', 'aad', 'baa', 'bbd', 'bab', 'dad', 'bdd']
 
     """
-    if used is None: used = set([])
+    if used is None:
+        used = set([])
     if dist == 0:
         if not s in used:
             used.add(s)
@@ -136,7 +146,7 @@ def mutations(s, dist, alphabet, used=None):
     for d in range(dist): #from least to most distance
         for letter in alphabet:
             for pos in range(len(s)):
-                for result in mutations(s[:pos] + letter + s[pos+1:], dist-1, alphabet, used):
+                for result in mutations(s[:pos] + letter + s[pos + 1:], dist - 1, alphabet, used):
                     yield result
 
 
