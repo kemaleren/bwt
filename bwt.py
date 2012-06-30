@@ -23,10 +23,10 @@ def get_bwt(s):
     'annb\x00aa'
 
     """
-    table = [s[i:] + s[:i] for i in range(len(s))]  # rotations of string
+    table = [s[i:] + s[:i] for i in range(len(s))]
     table = sorted(table)
-    last_column = [row[-1] for row in table]  # Last characters of each row
-    return "".join(last_column)  # Convert list of characters into string
+    last_column = [row[-1] for row in table]
+    return "".join(last_column) 
 
 
 def get_occ(bwt):
@@ -115,7 +115,7 @@ def bwt_interval(query, occ, count, length):
     """
     begin = 0
     end = length - 1
-    query = query[::-1] #reverse the query
+    query = query[::-1]
     
     for letter in query:
         begin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1 
