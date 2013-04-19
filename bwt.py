@@ -10,7 +10,7 @@ Burrows-Wheeler transform.
 EOS = "\0"
 
 def get_bwt(s):
-    """
+    r"""
     Returns the Burrows-Wheeler transform of 's'.
 
     Based on the Python implementation given on Wikipedia:
@@ -26,11 +26,11 @@ def get_bwt(s):
     table = [s[i:] + s[:i] for i in range(len(s))]
     table = sorted(table)
     last_column = [row[-1] for row in table]
-    return "".join(last_column) 
+    return "".join(last_column)
 
 
 def get_occ(bwt):
-    """
+    r"""
     Returns occurrence information for letters in the string 'bwt'.
     occ[letter][i] = the number of occurrences of 'letter' in
     bwt[0, i + 1].
@@ -38,11 +38,17 @@ def get_occ(bwt):
     Examples:
     ---------
 
-    >>> get_occ('annb\x00aa')
-    {'\x00': [0, 0, 0, 0, 1, 1, 1],
-    'a': [1, 1, 1, 1, 1, 2, 3],
-    'b': [0, 0, 0, 1, 1, 1, 1],
-    'n': [0, 1, 2, 2, 2, 2, 2]}
+    >>> get_occ('annb\x00aa')['\x00']
+    [0, 0, 0, 0, 1, 1, 1]
+
+    >>> get_occ('annb\x00aa')['a']
+    [1, 1, 1, 1, 1, 2, 3]
+
+    >>> get_occ('annb\x00aa')['b']
+    [0, 0, 0, 1, 1, 1, 1]
+
+    >>> get_occ('annb\x00aa')['n']
+    [0, 1, 2, 2, 2, 2, 2]
 
     """
     letters = set(bwt)
@@ -64,9 +70,9 @@ def get_count(s):
     Examples:
     ---------
 
-    >>> get_count('sassy')
-    {'a': 0, 's': 1, 'y': 4}
-    
+    >>> get_count('sassy') == {'a': 0, 'y': 4, 's': 1}
+    True
+
     """
     letters = set(s)
     count = {}
@@ -76,19 +82,19 @@ def get_count(s):
 
 
 def get_sa(s):
-    """
+    r"""
     Returns the suffix array of 's'
 
     Examples:
     ---------
-    
->>> get_sa('banana\0')
+
+    >>> get_sa('banana\0')
     [6, 5, 3, 1, 0, 4, 2]
 
     """
     suffixes = [s[i:] for i in range(len(s))]
     return [suffixes.index(i) for i in sorted([s[j:] for j in range(len(s))])]
-    
+
 
 def use_occ(occ, letter, i, length):
     """
@@ -116,9 +122,9 @@ def bwt_interval(query, occ, count, length):
     begin = 0
     end = length - 1
     query = query[::-1]
-    
+
     for letter in query:
-        begin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1 
+        begin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1
         end = count[letter] + use_occ(occ, letter, end, length)
         if begin > end:
             return None, None
@@ -132,9 +138,10 @@ def mutations(s, dist, alphabet, used=None):
 
     Examples:
     ---------
-    
-    >>> mutations('bad', 1, set(['a', 'b', 'd'])
-    ['bad', 'aad', 'baa', 'bbd', 'bab', 'dad', 'bdd']
+
+    >>> set(mutations('bad', 1, set('abd'))) == \
+    set(['bad', 'aad', 'dad', 'bbd', 'bdd', 'baa', 'bab'])
+    True
 
     """
     if used is None:
@@ -169,21 +176,22 @@ def bwt_inexact_match(query, reference, mismatches=None):
 
     Examples:
     ---------
-    
+
     >>> bwt_inexact_match('abc', 'abcabd', 1)
     [0, 3]
 
     """
 
     alphabet, bwt, occ, count, sa = get_bwt_data(reference)
+    if not set(query) <= alphabet:
+        return []
     results = []
-
     for s in mutations(query, mismatches, alphabet):
         begin, end = bwt_interval(s, occ, count, len(bwt))
         if begin is not None:
             results += sa[begin:end]
     return sorted(set(results))
-        
+
 
 def bwt_exact_match(query, reference):
     """
@@ -193,11 +201,9 @@ def bwt_exact_match(query, reference):
     ---------
     >>> bwt_exact_match('abc', 'abcabcabc')
     [0, 3, 6]
-    
+
     >>> bwt_exact_match('gef', 'abcabcabc')
     []
 
     """
     return bwt_inexact_match(query, reference, mismatches=0)
-    
-
