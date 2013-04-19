@@ -6,6 +6,7 @@ ABOUT
 -----
 
 'bwt' is a Python module for searching strings using the Burrows-Wheeler transform.
+
 The functions it provides are intentionally inefficient; they are meant for learning only.
 
 
