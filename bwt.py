@@ -7,6 +7,8 @@ Burrows-Wheeler transform.
 
 """
 
+from collections import namedtuple
+
 EOS = "\0"
 
 def get_bwt(s):
@@ -109,59 +111,18 @@ def use_occ(occ, letter, i, length):
     return occ[letter][i]
 
 
-def bwt_interval(query, occ, count, length):
-    """
-    Returns the interval [start, stop) in the suffix array that
-    corresponds to exact matches of 'query'.
-
-    occ    : occurrence information calculated with get_occ.
-    count  : count information calculated with get_count.
-    length : the number of characters in the reference string.
-
-    """
-    begin = 0
-    end = length - 1
-    query = query[::-1]
-
-    for letter in query:
-        begin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1
-        end = count[letter] + use_occ(occ, letter, end, length)
-        if begin > end:
-            return None, None
-    return begin, end + 1
+def update_range(begin, end, letter, occ, count, length):
+    """update (start, end) given a new letter"""
+    newbegin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1
+    newend = count[letter] + use_occ(occ, letter, end, length)
+    return newbegin, newend
 
 
-def mutations(s, dist, alphabet, used=None):
-    """
-    Yields all strings that can be derived from string 's' with
-    Hamming distance at most 'dist', using a given alphabet.
-
-    Examples:
-    ---------
-
-    >>> set(mutations('bad', 1, set('abd'))) == \
-    set(['bad', 'aad', 'dad', 'bbd', 'bdd', 'baa', 'bab'])
-    True
-
-    """
-    if used is None:
-        used = set([])
-    if dist == 0:
-        if not s in used:
-            used.add(s)
-            yield s
-    for d in range(dist): #from least to most distance
-        for letter in alphabet:
-            for pos in range(len(s)):
-                for result in mutations(s[:pos] + letter + s[pos + 1:], dist - 1, alphabet, used):
-                    yield result
-
-
-def get_bwt_data(reference):
+def get_bwt_data(reference, eos=EOS):
     """Returns the data structures needed to perform BWT searches"""
     alphabet = set(reference)
-    assert EOS not in reference
-    reference += EOS
+    assert eos not in reference
+    reference += eos
     bwt = get_bwt(reference)
     occ = get_occ(bwt)
     count = get_count(reference[:-1])
@@ -169,7 +130,7 @@ def get_bwt_data(reference):
     return alphabet, bwt, occ, count, sa
 
 
-def bwt_inexact_match(query, reference, mismatches=None):
+def bwt_inexact_match(query, reference, mismatches=0, bwt_data=None):
     """
     Find all matches of the string 'query' in the string 'reference', with at most
     'mismatch' mismatches
@@ -180,20 +141,41 @@ def bwt_inexact_match(query, reference, mismatches=None):
     >>> bwt_inexact_match('abc', 'abcabd', 1)
     [0, 3]
 
-    """
+    >>> bwt_inexact_match('abdd', 'abcabd', 1)
+    []
 
-    alphabet, bwt, occ, count, sa = get_bwt_data(reference)
+    """
+    if bwt_data is None:
+        bwt_data = get_bwt_data(reference)
+    alphabet, bwt, occ, count, sa = bwt_data
     if not set(query) <= alphabet:
         return []
+    length = len(bwt)
+
     results = []
-    for s in mutations(query, mismatches, alphabet):
-        begin, end = bwt_interval(s, occ, count, len(bwt))
-        if begin is not None:
-            results += sa[begin:end]
+
+    # a stack of partial matches
+    Partial = namedtuple('Partial', 'query begin end mismatches')
+    partials = [Partial(query, 0, len(bwt) - 1, mismatches)]
+
+    while len(partials) > 0:
+        p = partials.pop()
+        if len(p.query) == 0:
+            if p.begin <= p.end:
+                results.extend(sa[p.begin : p.end + 1])
+        else:
+            query = p.query[:-1]
+            curletter = p.query[-1:]
+            letters = [curletter] if p.mismatches == 0 else alphabet
+            for letter in letters:
+                mm = p.mismatches if letter == curletter else max(0, p.mismatches - 1)
+                begin, end = update_range(p.begin, p.end, letter, occ, count, length)
+                if begin <= end:
+                    partials.append(Partial(query, begin, end, mm))
     return sorted(set(results))
 
 
-def bwt_exact_match(query, reference):
+def bwt_exact_match(query, reference, bwt_data=None):
     """
     Find all exact matches of the string 'query' in the string 'reference'.
 
@@ -206,4 +188,4 @@ def bwt_exact_match(query, reference):
     []
 
     """
-    return bwt_inexact_match(query, reference, mismatches=0)
+    return bwt_inexact_match(query, reference, mismatches=0, bwt_data=bwt_data)
