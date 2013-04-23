@@ -72,7 +72,7 @@ def get_occ(bwt, letters=None):
         occ.append(occ[-1] + new)
 
     for letter in bwt[1:]:
-        for k, v in result.iteritems():
+        for k, v in result.items():
             update_list(v, k == letter)
     return result
 
