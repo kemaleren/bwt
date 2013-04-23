@@ -35,7 +35,7 @@ def find(query, reference, mismatches=0, bwt_data=None):
     assert len(query) > 0
 
     if bwt_data is None:
-        bwt_data = make_bwt_data(reference)
+        bwt_data = make_all(reference)
     alphabet, bwt, occ, count, sa = bwt_data
     assert len(alphabet) > 0
 
@@ -167,7 +167,7 @@ def update_range(begin, end, letter, occ, count, length):
     return newbegin, newend
 
 
-def make_bwt_data(reference, sa=None, eos=EOS):
+def make_all(reference, sa=None, eos=EOS):
     """Returns the data structures needed to perform BWT searches"""
     alphabet = set(reference)
     assert eos not in alphabet
