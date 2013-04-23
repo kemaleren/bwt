@@ -120,14 +120,15 @@ def update_range(begin, end, letter, occ, count, length):
     return newbegin, newend
 
 
-def get_bwt_data(reference, eos=EOS):
+def get_bwt_data(reference, sa=None, eos=EOS):
     """Returns the data structures needed to perform BWT searches"""
     alphabet = set(reference)
     assert eos not in alphabet
     count = get_count(reference, alphabet)
 
     reference += eos
-    sa = get_sa(reference)
+    if sa is None:
+        sa = get_sa(reference)
     bwt = get_bwt(reference, sa)
     occ = get_occ(bwt, alphabet | set([eos]))
 
