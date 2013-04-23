@@ -160,22 +160,10 @@ def make_count(s, alphabet=None):
     return result
 
 
-def use_occ(occ, letter, i, length):
-    """Handles retrieving occurrence information; in particular, deals
-    with overflows.
-
-    """
-    if i == -1:
-        return 0
-    if i == length:
-        return occ[letter][-1]
-    return occ[letter][i]
-
-
 def update_range(begin, end, letter, occ, count, length):
-    """update (start, end) given a new letter"""
-    newbegin = count[letter] + use_occ(occ, letter, begin - 1, length) + 1
-    newend = count[letter] + use_occ(occ, letter, end, length)
+    """update (begin, end) given a new letter"""
+    newbegin = count[letter] + occ[letter][begin - 1] + 1
+    newend = count[letter] + occ[letter][end]
     return newbegin, newend
 
 
@@ -190,6 +178,9 @@ def make_bwt_data(reference, sa=None, eos=EOS):
         sa = make_sa(reference)
     bwt = make_bwt(reference, sa)
     occ = make_occ(bwt, alphabet | set([eos]))
+
+    for k, v in occ.items():
+        v.extend([v[-1], 0]) # for when pointers go off the edges
 
     return alphabet, bwt, occ, count, sa
 
