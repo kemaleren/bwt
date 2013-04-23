@@ -183,5 +183,3 @@ def make_all(reference, sa=None, eos=EOS):
         v.extend([v[-1], 0]) # for when pointers go off the edges
 
     return alphabet, bwt, occ, count, sa
-
-
