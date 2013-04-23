@@ -7,8 +7,6 @@ Burrows-Wheeler transform.
 
 """
 
-from collections import namedtuple
-
 EOS = "\0"
 
 def get_bwt(s):
@@ -157,8 +155,12 @@ def bwt_match(query, reference, mismatches=0, bwt_data=None):
     results = []
 
     # a stack of partial matches
-    Partial = namedtuple('Partial', 'query begin end mismatches')
-    partials = [Partial(query, 0, len(bwt) - 1, mismatches)]
+    class Partial(object):
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+    partials = [Partial(query=query, begin=0, end=len(bwt) - 1,
+                        mismatches=mismatches)]
 
     while len(partials) > 0:
         p = partials.pop()
@@ -172,5 +174,6 @@ def bwt_match(query, reference, mismatches=0, bwt_data=None):
                 if len(query) == 0:
                     results.extend(sa[begin : end + 1])
                 else:
-                    partials.append(Partial(query, begin, end, mm))
+                    partials.append(Partial(query=query, begin=begin,
+                                            end=end, mismatches=mm))
     return sorted(set(results))
