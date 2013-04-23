@@ -9,12 +9,25 @@ Burrows-Wheeler transform.
 
 EOS = "\0"
 
-def get_bwt(s):
-    r"""
-    Returns the Burrows-Wheeler transform of 's'.
+from collections import Counter
 
-    Based on the Python implementation given on Wikipedia:
-    http://en.wikipedia.org/wiki/Burrows%E2%80%93Wheeler_transform
+def get_sa(s):
+    r"""Returns the suffix array of 's'
+
+    Examples:
+    ---------
+
+    >>> get_sa('banana\0')
+    [6, 5, 3, 1, 0, 4, 2]
+
+    """
+    suffixes = {s[i:] : i for i in range(len(s))}
+    return list(suffixes[suffix]
+                for suffix in sorted(suffixes.keys()))
+
+
+def get_bwt(s, sa=None):
+    r"""Computes the Burrows-Wheeler transform from a suffix array.
 
     Examples:
     ---------
@@ -23,15 +36,14 @@ def get_bwt(s):
     'annb\x00aa'
 
     """
-    table = sorted([s[i:] + s[:i] for i in range(len(s))])
-    last_column = [row[-1] for row in table]
-    return "".join(last_column)
+    if sa is None:
+        sa = get_sa(s)
+    return "".join(s[idx - 1] for idx in sa)
 
 
-def get_occ(bwt):
-    r"""
-    Returns occurrence information for letters in the string 'bwt'.
-    occ[letter][i] = the number of occurrences of 'letter' in
+def get_occ(bwt, letters=None):
+    r"""Returns occurrence information for letters in the string
+    'bwt'. occ[letter][i] = the number of occurrences of 'letter' in
     bwt[0, i + 1].
 
     Examples:
@@ -50,14 +62,23 @@ def get_occ(bwt):
     [0, 1, 2, 2, 2, 2, 2]
 
     """
-    return {letter : list(sum(1 for j in bwt[:i + 1] if j == letter)
-                          for i in range(len(bwt)))
-            for letter in set(bwt)}
+    if letters is None:
+        letters = set(bwt)
+
+    result = {letter : [0] for letter in letters}
+    result[bwt[0]] = [1]
+
+    def update_list(occ, new):
+        occ.append(occ[-1] + new)
+
+    for letter in bwt[1:]:
+        for k, v in result.iteritems():
+            update_list(v, k == letter)
+    return result
 
 
-def get_count(s):
-    """
-    Returns count information for the letters in the string 's'.
+def get_count(s, alphabet=None):
+    """Returns count information for the letters in the string 's'.
 
     count[letter] contains the number of symbols in 's' that are
     lexographically smaller than 'letter'.
@@ -69,28 +90,19 @@ def get_count(s):
     True
 
     """
-    return {letter : sum(1 for i in s if i < letter)
-            for letter in set(s)}
-
-
-def get_sa(s):
-    r"""
-    Returns the suffix array of 's'
-
-    Examples:
-    ---------
-
-    >>> get_sa('banana\0')
-    [6, 5, 3, 1, 0, 4, 2]
-
-    """
-    suffixes = list(s[i:] for i in range(len(s)))
-    return list(suffixes.index(suffix) for suffix in sorted(suffixes))
+    if alphabet is None:
+        alphabet = set(s)
+    c = Counter(s)
+    total = 0
+    result = {}
+    for letter in sorted(alphabet):
+        result[letter] = total
+        total += c[letter]
+    return result
 
 
 def use_occ(occ, letter, i, length):
-    """
-    Handles retrieving occurrence information; in particular, deals
+    """Handles retrieving occurrence information; in particular, deals
     with overflows.
 
     """
@@ -111,19 +123,20 @@ def update_range(begin, end, letter, occ, count, length):
 def get_bwt_data(reference, eos=EOS):
     """Returns the data structures needed to perform BWT searches"""
     alphabet = set(reference)
-    assert eos not in reference
+    assert eos not in alphabet
+    count = get_count(reference, alphabet)
+
     reference += eos
-    bwt = get_bwt(reference)
-    occ = get_occ(bwt)
-    count = get_count(reference[:-1])
     sa = get_sa(reference)
+    bwt = get_bwt(reference, sa)
+    occ = get_occ(bwt, alphabet | set([eos]))
+
     return alphabet, bwt, occ, count, sa
 
 
 def bwt_match(query, reference, mismatches=0, bwt_data=None):
-    """
-    Find all matches of the string 'query' in the string 'reference', with at most
-    'mismatch' mismatches
+    """Find all matches of the string 'query' in the string
+    'reference', with at most 'mismatch' mismatches.
 
     Examples:
     ---------
