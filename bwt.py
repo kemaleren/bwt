@@ -130,7 +130,7 @@ def get_bwt_data(reference, eos=EOS):
     return alphabet, bwt, occ, count, sa
 
 
-def bwt_inexact_match(query, reference, mismatches=0, bwt_data=None):
+def bwt_match(query, reference, mismatches=0, bwt_data=None):
     """
     Find all matches of the string 'query' in the string 'reference', with at most
     'mismatch' mismatches
@@ -138,20 +138,30 @@ def bwt_inexact_match(query, reference, mismatches=0, bwt_data=None):
     Examples:
     ---------
 
-    >>> bwt_inexact_match('abc', 'abcabd', 1)
+    >>> bwt_match('abc', 'abcabcabc')
+    [0, 3, 6]
+
+    >>> bwt_match('gef', 'abcabcabc')
+    []
+
+    >>> bwt_match('abc', 'abcabd', mismatches=1)
     [0, 3]
 
-    >>> bwt_inexact_match('abdd', 'abcabd', 1)
+    >>> bwt_match('abdd', 'abcabd', mismatches=1)
     []
 
     """
+    assert len(query) > 0
+
     if bwt_data is None:
         bwt_data = get_bwt_data(reference)
     alphabet, bwt, occ, count, sa = bwt_data
+    assert len(alphabet) > 0
+
     if not set(query) <= alphabet:
         return []
-    length = len(bwt)
 
+    length = len(bwt)
     results = []
 
     # a stack of partial matches
@@ -160,32 +170,15 @@ def bwt_inexact_match(query, reference, mismatches=0, bwt_data=None):
 
     while len(partials) > 0:
         p = partials.pop()
-        if len(p.query) == 0:
-            if p.begin <= p.end:
-                results.extend(sa[p.begin : p.end + 1])
-        else:
-            query = p.query[:-1]
-            curletter = p.query[-1:]
-            letters = [curletter] if p.mismatches == 0 else alphabet
-            for letter in letters:
-                mm = p.mismatches if letter == curletter else max(0, p.mismatches - 1)
-                begin, end = update_range(p.begin, p.end, letter, occ, count, length)
-                if begin <= end:
+        query = p.query[:-1]
+        curletter = p.query[-1:]
+        letters = [curletter] if p.mismatches == 0 else alphabet
+        for letter in letters:
+            mm = p.mismatches if letter == curletter else max(0, p.mismatches - 1)
+            begin, end = update_range(p.begin, p.end, letter, occ, count, length)
+            if begin <= end:
+                if len(query) == 0:
+                    results.extend(sa[begin : end + 1])
+                else:
                     partials.append(Partial(query, begin, end, mm))
     return sorted(set(results))
-
-
-def bwt_exact_match(query, reference, bwt_data=None):
-    """
-    Find all exact matches of the string 'query' in the string 'reference'.
-
-    Examples:
-    ---------
-    >>> bwt_exact_match('abc', 'abcabcabc')
-    [0, 3, 6]
-
-    >>> bwt_exact_match('gef', 'abcabcabc')
-    []
-
-    """
-    return bwt_inexact_match(query, reference, mismatches=0, bwt_data=bwt_data)
