@@ -25,8 +25,7 @@ def get_bwt(s):
     'annb\x00aa'
 
     """
-    table = [s[i:] + s[:i] for i in range(len(s))]
-    table = sorted(table)
+    table = sorted([s[i:] + s[:i] for i in range(len(s))])
     last_column = [row[-1] for row in table]
     return "".join(last_column)
 
@@ -53,13 +52,9 @@ def get_occ(bwt):
     [0, 1, 2, 2, 2, 2, 2]
 
     """
-    letters = set(bwt)
-    occ = {}
-    for letter in letters:
-        occ[letter] = []
-        for i in range(len(bwt)):
-            occ[letter].append(len([j for j in bwt[:i + 1] if j == letter]))
-    return occ
+    return {letter : list(sum(1 for j in bwt[:i + 1] if j == letter)
+                          for i in range(len(bwt)))
+            for letter in set(bwt)}
 
 
 def get_count(s):
@@ -76,11 +71,8 @@ def get_count(s):
     True
 
     """
-    letters = set(s)
-    count = {}
-    for letter in letters:
-        count[letter] = len([i for i in s if i < letter])
-    return count
+    return {letter : sum(1 for i in s if i < letter)
+            for letter in set(s)}
 
 
 def get_sa(s):
@@ -94,8 +86,8 @@ def get_sa(s):
     [6, 5, 3, 1, 0, 4, 2]
 
     """
-    suffixes = [s[i:] for i in range(len(s))]
-    return [suffixes.index(i) for i in sorted([s[j:] for j in range(len(s))])]
+    suffixes = list(s[i:] for i in range(len(s)))
+    return list(suffixes.index(suffix) for suffix in sorted(suffixes))
 
 
 def use_occ(occ, letter, i, length):
