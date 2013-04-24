@@ -113,7 +113,7 @@ def make_bwt(s, sa=None):
 def make_occ(bwt, letters=None):
     r"""Returns occurrence information for letters in the string
     'bwt'. occ[letter][i] = the number of occurrences of 'letter' in
-    bwt[0, i + 1].
+    bwt[0 : i + 1].
 
     Examples:
     ---------
@@ -133,16 +133,11 @@ def make_occ(bwt, letters=None):
     """
     if letters is None:
         letters = set(bwt)
-
     result = {letter : [0] for letter in letters}
     result[bwt[0]] = [1]
-
-    def update_list(occ, new):
-        occ.append(occ[-1] + new)
-
     for letter in bwt[1:]:
         for k, v in result.items():
-            update_list(v, k == letter)
+            v.append(v[-1] + (k == letter))
     return result
 
 
