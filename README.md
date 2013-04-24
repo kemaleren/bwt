@@ -14,7 +14,7 @@ Sample usage:
     import urllib2
 
     # get Pride and Prejudice, Chapters 1 through 5
-    url = http://www.gutenberg.org/cache/epub/1342/pg1342.txt
+    url = 'http://www.gutenberg.org/cache/epub/1342/pg1342.txt'
     text = urllib2.urlopen(url).read()[677:30891]
 
     # pre-compute data structures
