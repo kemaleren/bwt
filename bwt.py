@@ -64,15 +64,17 @@ def find(query, reference, mismatches=0, bwt_data=None, sa=None):
     while len(partials) > 0:
         p = partials.pop()
         query = p.query[:-1]
-        curletter = p.query[-1]
-        letters = [curletter] if p.mismatches == 0 else alphabet
+        last = p.query[-1]
+        letters = [last] if p.mismatches == 0 else alphabet
         for letter in letters:
-            mm = p.mismatches if letter == curletter else max(0, p.mismatches - 1)
             begin, end = update_range(p.begin, p.end, letter, occ, count, length)
             if begin <= end:
                 if len(query) == 0:
                     results.extend(sa[begin : end + 1])
                 else:
+                    mm = p.mismatches
+                    if letter != last:
+                        mm = max(0, p.mismatches - 1)
                     partials.append(Partial(query=query, begin=begin,
                                             end=end, mismatches=mm))
     return sorted(set(results))
