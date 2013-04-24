@@ -1,9 +1,17 @@
-"""
-bwt.py
+"""bwt.py
 Author: Kemal Eren
 
-Functions for transforming and searching strings using the
-Burrows-Wheeler transform.
+Efficient string search using the Burrows-Wheeler transform.
+
+Lookup with find() is fast - O(len(query)) - but first the
+Burrows-Wheeler data structures must be computed. They can be
+precomputed via make_all() and provided to find() with the 'bwt_data'
+argument.
+
+The only slow part of make_all() is computing the suffix array. If
+desired, the suffix array may instead be computed with a more
+efficient method elsewhere, then provided to find() or make_all() via
+the 'sa' argument.
 
 """
 
@@ -12,7 +20,7 @@ from collections import Counter
 EOS = "\0"
 
 
-def find(query, reference, mismatches=0, bwt_data=None):
+def find(query, reference, mismatches=0, bwt_data=None, sa=None):
     """Find all matches of the string 'query' in the string
     'reference', with at most 'mismatch' mismatches.
 
@@ -35,7 +43,7 @@ def find(query, reference, mismatches=0, bwt_data=None):
     assert len(query) > 0
 
     if bwt_data is None:
-        bwt_data = make_all(reference)
+        bwt_data = make_all(reference, sa=sa)
     alphabet, bwt, occ, count, sa = bwt_data
     assert len(alphabet) > 0
 
