@@ -64,7 +64,7 @@ def find(query, reference, mismatches=0, bwt_data=None, sa=None):
     while len(partials) > 0:
         p = partials.pop()
         query = p.query[:-1]
-        curletter = p.query[-1:]
+        curletter = p.query[-1]
         letters = [curletter] if p.mismatches == 0 else alphabet
         for letter in letters:
             mm = p.mismatches if letter == curletter else max(0, p.mismatches - 1)
