@@ -23,7 +23,7 @@ bwt_data = bwt.make_all(text)
 
 # find all occurances of the word 'married', with up to three
 # mismatches.
-bwt.find('married', text, bwt_data=bwt_data)
+bwt.find('married', text, mismatches=3, bwt_data=bwt_data)
 ```
 
 Note: `bwt.make_all()` is not fast, because it uses a naive suffix
