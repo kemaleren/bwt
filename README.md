@@ -12,18 +12,21 @@ Sample usage:
 
 ```python
 import bwt
-import urllib2
+import urllib3
 
 # get Pride and Prejudice, Chapters 1 through 5
 url = 'http://www.gutenberg.org/cache/epub/1342/pg1342.txt'
-text = urllib2.urlopen(url).read()[677:30891]
+http = urllib3.PoolManager()
+text = http.urlopen("GET", url).data.decode()
+
+chapters = text[675:30879]
 
 # pre-compute data structures
-bwt_data = bwt.make_all(text)
+bwt_data = bwt.make_all(chapters)
 
 # find all occurances of the word 'married', with up to three
 # mismatches.
-bwt.find('married', text, mismatches=3, bwt_data=bwt_data)
+bwt.find('married', chapters, mismatches=3, bwt_data=bwt_data)
 ```
 
 Note: `bwt.make_all()` is not fast, because it uses a naive suffix
