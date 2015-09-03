@@ -178,7 +178,7 @@ def make_all(reference, sa=None, eos=EOS):
     assert eos not in alphabet
     count = make_count(reference, alphabet)
 
-    reference += eos
+    reference = "".join([reference, eos])
     if sa is None:
         sa = make_sa(reference)
     bwt = make_bwt(reference, sa)
